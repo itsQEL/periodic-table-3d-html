@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QEL 3D Periodic Table </title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #0d1117;
+            color: #f0f6fc;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        
+        #header-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(13, 17, 23, 0.9);
+            border-bottom: 2px solid #30363d;
+            backdrop-filter: blur(10px);
+            z-index: 20;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-title h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box input {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #30363d;
+            background: #161b22;
+            color: #f0f6fc;
+            outline: none;
+            width: 280px;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .search-box input:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 10px rgba(88, 166, 255, 0.4);
+            width: 320px;
+        }
+
+        
+        #filter-bar {
+            position: absolute;
+            top: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            max-width: 96vw;
+            padding: 8px 14px;
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #30363d;
+            border-radius: 25px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        .filter-btn {
+            background: #21262d;
+            border: 1.5px solid #30363d;
+            color: #c9d1d9;
+            padding: 5px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            color: #ffffff;
+            border-color: #8b949e;
+        }
+
+        .filter-btn.active {
+            color: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px currentColor;
+        }
+
+        
+        #layout-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 10px;
+            background: rgba(22, 27, 34, 0.9);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 2px solid #30363d;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+        }
+
+        .layout-btn {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
+        }
+
+        .layout-btn:hover {
+            color: #f0f6fc;
+            background: #30363d;
+        }
+
+        .layout-btn.active {
+            background: #238636;
+            color: #ffffff;
+            border-color: #2ea043;
+            box-shadow: 0 0 10px rgba(46, 160, 67, 0.5);
+        }
+
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        
+        #tooltip {
+            position: absolute;
+            padding: 8px 14px;
+            background: rgba(22, 27, 34, 0.95);
+            border: 2px solid #58a6ff;
+            color: #ffffff;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            pointer-events: none;
+            display: none;
+            z-index: 50;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background: #161b22;
+            border: 2px solid #30363d;
+            border-radius: 20px;
+            width: 92%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            position: relative;
+            animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #ffffff;
+            background: #da3633;
+            border-color: #f85149;
+        }
+
+        .modal-content {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 20px;
+            padding: 25px;
+        }
+
+        @media (max-width: 820px) {
+            .modal-content { grid-template-columns: 1fr; }
+            #filter-bar { display: none; }
+        }
+
+        
+        .atom-container {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #bohr-canvas {
+            width: 100%;
+            height: 300px;
+            border-radius: 12px;
+            background: #0d1117;
+        }
+
+        .speed-control {
+            width: 100%;
+            margin-top: 12px;
+            background: #161b22;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+
+        .speed-control input[type=range] {
+            flex: 1;
+            accent-color: #58a6ff;
+            cursor: pointer;
+        }
+
+        
+        .element-details {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .element-title-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .element-title-header h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #f0f6fc;
+        }
+
+        .category-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .info-card {
+            background: #21262d;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+        }
+
+        .info-label {
+            font-size: 0.72rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .element-desc {
+            background: #21262d;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            color: #8b949e;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+    </style>
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body>
+
+    
+    <div id="header-bar">
+        <div class="brand-title">
+            <h1>3D Periodic Table</h1>
+        </div>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search name, symbol, or number..." oninput="filterElements()">
+        </div>
+    </div>
+
+    
+    <div id="filter-bar">
+        <button class="filter-btn active" style="color:#ffffff;" onclick="selectCategory('all', this)">All</button>
+        <button class="filter-btn" style="color:#ff4d4d;" onclick="selectCategory('alkali-metal', this)">Alkali Metals</button>
+        <button class="filter-btn" style="color:#ffa64d;" onclick="selectCategory('alkaline-earth-metal', this)">Alkaline Earth</button>
+        <button class="filter-btn" style="color:#ffff4d;" onclick="selectCategory('transition-metal', this)">Transition Metals</button>
+        <button class="filter-btn" style="color:#4dff88;" onclick="selectCategory('post-transition-metal', this)">Post-Transition</button>
+        <button class="filter-btn" style="color:#4dffff;" onclick="selectCategory('metalloid', this)">Metalloids</button>
+        <button class="filter-btn" style="color:#4d94ff;" onclick="selectCategory('reactive-nonmetal', this)">Reactive Nonmetals</button>
+        <button class="filter-btn" style="color:#b366ff;" onclick="selectCategory('noble-gas', this)">Noble Gases</button>
+        <button class="filter-btn" style="color:#ff66cc;" onclick="selectCategory('lanthanide', this)">Lanthanides</button>
+        <button class="filter-btn" style="color:#ff4d94;" onclick="selectCategory('actinide', this)">Actinides</button>
+    </div>
+
+    
+    <div id="canvas-container"></div>
+
+    
+    <div id="layout-bar">
+        <button class="layout-btn active" id="btn-grid" onclick="switchLayout('grid')">GRID</button>
+        <button class="layout-btn" id="btn-sphere" onclick="switchLayout('sphere')">SPHERE</button>
+        <button class="layout-btn" id="btn-helix" onclick="switchLayout('helix')">HELIX</button>
+    </div>
+
+    
+    <div id="tooltip"></div>
+
+    
+    <div class="modal-overlay" id="element-modal">
+        <div class="modal-card">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <div class="modal-content">
+                
+                <div class="atom-container">
+                    <canvas id="bohr-canvas"></canvas>
+                    <div class="speed-control">
+                        <span>Orbit Speed:</span>
+                        <input type="range" id="speed-slider" min="0" max="3" step="0.1" value="1" oninput="updateOrbitSpeed(this.value)">
+                        <span id="speed-val" style="color:#f0f6fc; font-weight:bold;">1.0x</span>
+                    </div>
+                </div>
+
+                
+                <div class="element-details">
+                    <div class="element-title-header">
+                        <h2 id="modal-name">Hydrogen</h2>
+                        <span class="category-badge" id="modal-category">Nonmetal</span>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <span class="info-label">Atomic Number</span>
+                            <span class="info-value" id="modal-number">1</span>
+                        </div>
+                        <div class="info-card">
+                            <span class="info-label">Symbol</span>
+                            <span class="info-value" id="modal-symbol">H</span>
+                        </div>
+                        <div class="info-card">
+                            <span class="info-label">Atomic Mass</span>
+                            <span class="info-value" id="modal-mass">1.008 u</span>
+                        </div>
+                        <div class="info-card">
+                            <span class="info-label">Phase at STP</span>
+                            <span class="info-value" id="modal-phase">Gas</span>
+                        </div>
+                        <div class="info-card" style="grid-column: span 2;">
+                            <span class="info-label">Electron Shells</span>
+                            <span class="info-value" id="modal-shells">1</span>
+                        </div>
+                        <div class="info-card" style="grid-column: span 2;">
+                            <span class="info-label">Discovered By</span>
+                            <span class="info-value" id="modal-discovered">Henry Cavendish (1766)</span>
+                        </div>
+                    </div>
+
+                    <div class="element-desc" id="modal-desc">
+                        Hydrogen is the lightest chemical element in the periodic table with atomic number 1.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+     
+
+        const categoryColors = {
+            'alkali-metal': 0xff4d4d,          // czerwony
+            'alkaline-earth-metal': 0xffa64d,  // pomarańczowy
+            'transition-metal': 0xffff4d,      // żółty 
+            'post-transition-metal': 0x4dff88, // Neon zielony
+            'metalloid': 0x4dffff,             // blękitny
+            'reactive-nonmetal': 0x4d94ff,     // niebieski
+            'noble-gas': 0xb366ff,             // fiolet
+            'lanthanide': 0xff66cc,            // rużowy
+            'actinide': 0xff4d94,              // nie pamietam 
+            'unknown': 0x8b949e                // szary
+        };
+
+        
+        const rawElementsData = [
+            [1, "H", "Hydrogen", "1.008", "reactive-nonmetal", "Gas", [1], 1, 1, "Henry Cavendish (1766)", "Lightest chemical element, most abundant chemical substance in the Universe."],
+            [2, "He", "Helium", "4.0026", "noble-gas", "Gas", [2], 18, 1, "Pierre Janssen, Norman Lockyer (1868)", "Colorless, odorless, tasteless, non-toxic, inert noble gas."],
+            [3, "Li", "Lithium", "6.94", "alkali-metal", "Solid", [2, 1], 1, 2, "Johan August Arfwedson (1817)", "Soft, silvery-white alkali metal. Lightest metal and lightest solid element."],
+            [4, "Be", "Beryllium", "9.0122", "alkaline-earth-metal", "Solid", [2, 2], 2, 2, "Louis-Nicolas Vauquelin (1798)", "Relatively rare metal in the universe, forms naturally as beryllium aluminosilicate."],
+            [5, "B", "Boron", "10.81", "metalloid", "Solid", [2, 3], 13, 2, "Joseph Louis Gay-Lussac (1808)", "Low-abundance metalloid commonly used in fiberglass and ceramics."],
+            [6, "C", "Carbon", "12.011", "reactive-nonmetal", "Solid", [2, 4], 14, 2, "Known to antiquity", "Nonmetallic element forming the basis of all organic chemistry and life."],
+            [7, "N", "Nitrogen", "14.007", "reactive-nonmetal", "Gas", [2, 5], 15, 2, "Daniel Rutherford (1772)", "Main constituent of Earth's atmosphere (~78%)."],
+            [8, "O", "Oxygen", "15.999", "reactive-nonmetal", "Gas", [2, 6], 16, 2, "Carl Wilhelm Scheele (1774)", "Highly reactive nonmetal and oxidizing agent."],
+            [9, "F", "Fluorine", "18.998", "reactive-nonmetal", "Gas", [2, 7], 17, 2, "Henri Moissan (1886)", "Extremely toxic halogen gas, most chemically reactive element."],
+            [10, "Ne", "Neon", "20.180", "noble-gas", "Gas", [2, 8], 18, 2, "William Ramsay (1898)", "Noble gas giving a distinct reddish-orange glow in high-voltage discharge signs."],
+            [11, "Na", "Sodium", "22.990", "alkali-metal", "Solid", [2, 8, 1], 1, 3, "Humphry Davy (1807)", "Soft, silvery-white, highly reactive alkali metal."],
+            [12, "Mg", "Magnesium", "24.305", "alkaline-earth-metal", "Solid", [2, 8, 2], 2, 3, "Joseph Black (1755)", "Shiny grey solid, essential constituent for life processes."],
+            [13, "Al", "Aluminium", "26.982", "post-transition-metal", "Solid", [2, 8, 3], 13, 3, "Hans Christian Ørsted (1825)", "Low-density metal resistant to corrosion by passivation."],
+            [14, "Si", "Silicon", "28.085", "metalloid", "Solid", [2, 8, 4], 14, 3, "Jöns Jacob Berzelius (1823)", "Hard, brittle crystalline metalloid widely used in electronics."],
+            [15, "P", "Phosphorus", "30.974", "reactive-nonmetal", "Solid", [2, 8, 5], 15, 3, "Hennig Brand (1669)", "Essential element for life, exists in white and red allotropes."],
+            [16, "S", "Sulfur", "32.06", "reactive-nonmetal", "Solid", [2, 8, 6], 16, 3, "Known to antiquity", "Bright yellow crystalline solid at room temperature."],
+            [17, "Cl", "Chlorine", "35.45", "reactive-nonmetal", "Gas", [2, 8, 7], 17, 3, "Carl Wilhelm Scheele (1774)", "Yellow-green halogen gas with strong disinfectant properties."],
+            [18, "Ar", "Argon", "39.948", "noble-gas", "Gas", [2, 8, 8], 18, 3, "Lord Rayleigh, William Ramsay (1894)", "Third-most abundant gas in Earth's atmosphere."],
+            [19, "K", "Potassium", "39.098", "alkali-metal", "Solid", [2, 8, 8, 1], 1, 4, "Humphry Davy (1807)", "Essential mineral nutrient for biological life."],
+            [20, "Ca", "Calcium", "40.078", "alkaline-earth-metal", "Solid", [2, 8, 8, 2], 2, 4, "Humphry Davy (1808)", "Essential metal component of bones, shells, and teeth."],
+            [21, "Sc", "Scandium", "44.956", "transition-metal", "Solid", [2, 8, 9, 2], 3, 4, "Lars Fredrik Nilson (1879)", "Silvery-white metallic transition metal."],
+            [22, "Ti", "Titanium", "47.867", "transition-metal", "Solid", [2, 8, 10, 2], 4, 4, "William Gregor (1791)", "Strong, light transition metal with high corrosion resistance."],
+            [23, "V", "Vanadium", "50.942", "transition-metal", "Solid", [2, 8, 11, 2], 5, 4, "Andrés Manuel del Río (1801)", "Hard, silvery-grey ductile transition metal."],
+            [24, "Cr", "Chromium", "51.996", "transition-metal", "Solid", [2, 8, 13, 1], 6, 4, "Louis Nicolas Vauquelin (1797)", "Steely-grey, lustrous, hard metal used in stainless steel."],
+            [25, "Mn", "Manganese", "54.938", "transition-metal", "Solid", [2, 8, 13, 2], 7, 4, "Johan Gottlieb Gahn (1774)", "Important industrial metal alloy element."],
+            [26, "Fe", "Iron", "55.845", "transition-metal", "Solid", [2, 8, 14, 2], 8, 4, "Known to antiquity", "Most common element on Earth by mass, forms outer and inner core."],
+            [27, "Co", "Cobalt", "58.933", "transition-metal", "Solid", [2, 8, 15, 2], 9, 4, "Georg Brandt (1735)", "Hard, lustrous, silver-grey metal."],
+            [28, "Ni", "Nickel", "58.693", "transition-metal", "Solid", [2, 8, 16, 2], 10, 4, "Axel Fredrik Cronstedt (1751)", "Silvery-white lustrous metal with a slight golden tinge."],
+            [29, "Cu", "Copper", "63.546", "transition-metal", "Solid", [2, 8, 18, 1], 11, 4, "Known to antiquity", "Soft, malleable metal with extremely high thermal and electrical conductivity."],
+            [30, "Zn", "Zinc", "65.38", "transition-metal", "Solid", [2, 8, 18, 2], 12, 4, "Indian metallurgists (before 1000 BCE)", "Slightly brittle metal at room temperature with bluish color."],
+            [31, "Ga", "Gallium", "69.723", "post-transition-metal", "Solid", [2, 8, 18, 3], 13, 4, "Lecoq de Boisbaudran (1875)", "Soft silvery metal that melts in the palm of your hand (29.76 °C)."],
+            [32, "Ge", "Germanium", "72.630", "metalloid", "Solid", [2, 8, 18, 4], 14, 4, "Clemens Winkler (1886)", "Lustrous, hard metalloid similar in properties to silicon."],
+            [33, "As", "Arsenic", "74.922", "metalloid", "Solid", [2, 8, 18, 5], 15, 4, "Albertus Magnus (1250)", "Notorious poisonous metalloid occurring in many minerals."],
+            [34, "Se", "Selenium", "78.971", "reactive-nonmetal", "Solid", [2, 8, 18, 6], 16, 4, "Jöns Jacob Berzelius (1817)", "Nonmetal with properties intermediate between sulfur and tellurium."],
+            [35, "Br", "Bromine", "79.904", "reactive-nonmetal", "Liquid", [2, 8, 18, 7], 17, 4, "Antoine Jérôme Balard (1826)", "Fuming red-brown liquid nonmetal at room temperature."],
+            [36, "Kr", "Krypton", "83.798", "noble-gas", "Gas", [2, 8, 18, 8], 18, 4, "William Ramsay, Morris Travers (1898)", "Colorless, odorless noble gas used in lighting and lasers."],
+            [37, "Rb", "Rubidium", "85.468", "alkali-metal", "Solid", [2, 8, 18, 8, 1], 1, 5, "Robert Bunsen, Gustav Kirchhoff (1861)", "Soft, highly reactive alkali metal."],
+            [38, "Sr", "Strontium", "87.62", "alkaline-earth-metal", "Solid", [2, 8, 18, 8, 2], 2, 5, "William Cruickshank (1787)", "Soft silver-yellow metallic alkaline earth element."],
+            [39, "Y", "Yttrium", "88.906", "transition-metal", "Solid", [2, 8, 18, 9, 2], 3, 5, "Johan Gadolin (1794)", "Silvery-metallic transition metal used in LEDs and phosphors."],
+            [40, "Zr", "Zirconium", "91.224", "transition-metal", "Solid", [2, 8, 18, 10, 2], 4, 5, "Martin Heinrich Klaproth (1789)", "Lustrous grey-white strong metal resistant to corrosion."],
+            [41, "Nb", "Niobium", "92.906", "transition-metal", "Solid", [2, 8, 18, 12, 1], 5, 5, "Charles Hatchett (1801)", "Light grey, crystalline, and ductile transition metal."],
+            [42, "Mo", "Molybdenum", "95.95", "transition-metal", "Solid", [2, 8, 18, 13, 1], 6, 5, "Carl Wilhelm Scheele (1778)", "High-melting point metal used in steel alloys."],
+            [43, "Tc", "Technetium", "(98)", "transition-metal", "Solid", [2, 8, 18, 13, 2], 7, 5, "Emilio Segrè, Carlo Perrier (1937)", "First artificially produced chemical element."],
+            [44, "Ru", "Ruthenium", "101.07", "transition-metal", "Solid", [2, 8, 18, 15, 1], 8, 5, "Karl Ernst Claus (1844)", "Rare transition metal belonging to platinum group."],
+            [45, "Rh", "Rhodium", "102.91", "transition-metal", "Solid", [2, 8, 18, 16, 1], 9, 5, "William Hyde Wollaston (1803)", "Rare, highly corrosion-resistant noble metal."],
+            [46, "Pd", "Palladium", "106.42", "transition-metal", "Solid", [2, 8, 18, 18], 10, 5, "William Hyde Wollaston (1802)", "Rare silvery-white metal used in catalytic converters."],
+            [47, "Ag", "Silver", "107.87", "transition-metal", "Solid", [2, 8, 18, 18, 1], 11, 5, "Known to antiquity", "Highest electrical conductivity, thermal conductivity, and reflectivity."],
+            [48, "Cd", "Cadmium", "112.41", "transition-metal", "Solid", [2, 8, 18, 18, 2], 12, 5, "Karl Samuel Leberecht Hermann (1817)", "Soft, malleable bluish-white toxic metal."],
+            [49, "In", "Indium", "114.82", "post-transition-metal", "Solid", [2, 8, 18, 18, 3], 13, 5, "Ferdinand Reich, Hieronymous Theodor Richter (1863)", "Extremely soft post-transition metal used in touchscreens."],
+            [50, "Sn", "Tin", "118.71", "post-transition-metal", "Solid", [2, 8, 18, 18, 4], 14, 5, "Known to antiquity", "Silvery metal that produces a characteristic 'tin cry' sound on bending."],
+            [51, "Sb", "Antimony", "121.76", "metalloid", "Solid", [2, 8, 18, 18, 5], 15, 5, "Known to antiquity", "Lustrous grey metalloid used in flameproofing compounds."],
+            [52, "Te", "Tellurium", "127.60", "metalloid", "Solid", [2, 8, 18, 18, 6], 16, 5, "Franz-Joseph Müller von Reichenstein (1782)", "Brittle, mildly toxic, rare metalloid."],
+            [53, "I", "Iodine", "126.90", "reactive-nonmetal", "Solid", [2, 8, 18, 18, 7], 17, 5, "Bernard Courtois (1811)", "Lustrous purple-black solid halogen sublimating into violet gas."],
+            [54, "Xe", "Xenon", "131.29", "noble-gas", "Gas", [2, 8, 18, 18, 8], 18, 5, "William Ramsay, Morris Travers (1898)", "Heavy noble gas producing a blue discharge glow."],
+            [55, "Cs", "Caesium", "132.91", "alkali-metal", "Solid", [2, 8, 18, 18, 8, 1], 1, 6, "Robert Bunsen, Gustav Kirchhoff (1860)", "Soft golden alkali metal, used in atomic clocks."],
+            [56, "Ba", "Barium", "137.33", "alkaline-earth-metal", "Solid", [2, 8, 18, 18, 8, 2], 2, 6, "Carl Wilhelm Scheele (1772)", "Soft, silvery alkaline earth metal."],
+            [57, "La", "Lanthanum", "138.91", "lanthanide", "Solid", [2, 8, 18, 18, 9, 2], 3, 9, "Carl Gustaf Mosander (1838)", "Soft, ductile, silvery-white metal that tarnishes rapidly."],
+            [58, "Ce", "Cerium", "140.12", "lanthanide", "Solid", [2, 8, 18, 19, 9, 2], 4, 9, "Martin Heinrich Klaproth (1803)", "Most abundant rare-earth metal."],
+            [59, "Pr", "Praseodymium", "140.91", "lanthanide", "Solid", [2, 8, 18, 21, 8, 2], 5, 9, "Carl Auer von Welsbach (1885)", "Soft, silvery, malleable lanthanide metal."],
+            [60, "Nd", "Neodymium", "144.24", "lanthanide", "Solid", [2, 8, 18, 22, 8, 2], 6, 9, "Carl Auer von Welsbach (1885)", "Used to make powerful permanent magnets."],
+            [61, "Pm", "Promethium", "(145)", "lanthanide", "Solid", [2, 8, 18, 23, 8, 2], 7, 9, "Chien Shiung Wu et al. (1945)", "Radioactive lanthanide with intense luminescence."],
+            [62, "Sm", "Samarium", "150.36", "lanthanide", "Solid", [2, 8, 18, 25, 8, 2], 8, 9, "Lecoq de Boisbaudran (1879)", "Moderately hard metal used in specialized magnets."],
+            [63, "Eu", "Europium", "151.96", "lanthanide", "Solid", [2, 8, 18, 25, 9, 2], 9, 9, "Eugène-Anatole Demarçay (1901)", "Most reactive rare-earth element."],
+            [64, "Gd", "Gadolinium", "157.25", "lanthanide", "Solid", [2, 8, 18, 25, 9, 2], 10, 9, "Jean Charles Galissard de Marignac (1880)", "Silvery-white metal with high neutron capture capability."],
+            [65, "Tb", "Terbium", "158.93", "lanthanide", "Solid", [2, 8, 18, 27, 8, 2], 11, 9, "Carl Gustaf Mosander (1843)", "Silvery-rare earth metal, malleable and ductile."],
+            [66, "Dy", "Dysprosium", "162.50", "lanthanide", "Solid", [2, 8, 18, 28, 8, 2], 12, 9, "Lecoq de Boisbaudran (1886)", "Rare-earth element with high magnetic strength."],
+            [67, "Ho", "Holmium", "164.93", "lanthanide", "Solid", [2, 8, 18, 29, 8, 2], 13, 9, "Marc Delafontaine, Jacques-Louis Soret (1878)", "Has the highest magnetic moment of any naturally occurring element."],
+            [68, "Er", "Erbium", "167.26", "lanthanide", "Solid", [2, 8, 18, 30, 8, 2], 14, 9, "Carl Gustaf Mosander (1843)", "Silvery-white metal used in fiber optic amplifiers."],
+            [69, "Tm", "Thulium", "168.93", "lanthanide", "Solid", [2, 8, 18, 31, 8, 2], 15, 9, "Per Teodor Cleve (1879)", "Second-least abundant lanthanide."],
+            [70, "Yb", "Ytterbium", "173.05", "lanthanide", "Solid", [2, 8, 18, 32, 8, 2], 16, 9, "Jean Charles Galissard de Marignac (1878)", "Soft, malleable lanthanide metal."],
+            [71, "Lu", "Lutetium", "174.97", "lanthanide", "Solid", [2, 8, 18, 32, 9, 2], 17, 9, "Georges Urbain (1907)", "Last element in the lanthanide series."],
+            [72, "Hf", "Hafnium", "178.49", "transition-metal", "Solid", [2, 8, 18, 32, 10, 2], 4, 6, "Dirk Coster, George de Hevesy (1923)", "Lustrous, silvery transition metal used in control rods."],
+            [73, "Ta", "Tantalum", "180.95", "transition-metal", "Solid", [2, 8, 18, 32, 11, 2], 5, 6, "Anders Gustaf Ekeberg (1802)", "Highly corrosion-resistant metal used in electronics capacitors."],
+            [74, "W", "Tungsten", "183.84", "transition-metal", "Solid", [2, 8, 18, 32, 12, 2], 6, 6, "Carl Wilhelm Scheele (1781)", "Highest melting point of all discovered elements (3422 °C)."],
+            [75, "Re", "Rhenium", "186.21", "transition-metal", "Solid", [2, 8, 18, 32, 13, 2], 7, 6, "Masataka Ogawa (1908)", "One of the rarest elements in Earth's crust."],
+            [76, "Os", "Osmium", "190.23", "transition-metal", "Solid", [2, 8, 18, 32, 14, 2], 8, 6, "Smithson Tennant (1803)", "Densest naturally occurring element."],
+            [77, "Ir", "Iridium", "192.22", "transition-metal", "Solid", [2, 8, 18, 32, 15, 2], 9, 6, "Smithson Tennant (1803)", "Second-densest element, extremely corrosion resistant."],
+            [78, "Pt", "Platinum", "195.08", "transition-metal", "Solid", [2, 8, 18, 32, 17, 1], 10, 6, "Antonio de Ulloa (1735)", "Dense, malleable, highly unreactive noble metal."],
+            [79, "Au", "Gold", "196.97", "transition-metal", "Solid", [2, 8, 18, 32, 18, 1], 11, 6, "Known to antiquity", "Bright yellow, dense, soft, malleable noble metal."],
+            [80, "Hg", "Mercury", "200.59", "transition-metal", "Liquid", [2, 8, 18, 32, 18, 2], 12, 6, "Known to antiquity", "Only metallic element liquid at standard room temperature."],
+            [81, "Tl", "Thallium", "204.38", "post-transition-metal", "Solid", [2, 8, 18, 32, 18, 3], 13, 6, "William Crookes (1861)", "Soft grey post-transition metal, historically used as rat poison."],
+            [82, "Pb", "Lead", "207.2", "post-transition-metal", "Solid", [2, 8, 18, 32, 18, 4], 14, 6, "Known to antiquity", "Heavy, dense metal with low melting point."],
+            [83, "Bi", "Bismuth", "208.98", "post-transition-metal", "Solid", [2, 8, 18, 32, 18, 5], 15, 6, "Claude François Geoffroy (1753)", "High diamagnetism and iridescent oxidation color."],
+            [84, "Po", "Polonium", "(209)", "post-transition-metal", "Solid", [2, 8, 18, 32, 18, 6], 16, 6, "Marie and Pierre Curie (1898)", "Rare and highly radioactive metal."],
+            [85, "At", "Astatine", "(210)", "metalloid", "Solid", [2, 8, 18, 32, 18, 7], 17, 6, "Dale R. Corson et al. (1940)", "Extremely rare naturally occurring element."],
+            [86, "Rn", "Radon", "(222)", "noble-gas", "Gas", [2, 8, 18, 32, 18, 8], 18, 6, "Ernest Rutherford, Robert Owens (1899)", "Radioactive noble gas released from decay of radium."],
+            [87, "Fr", "Francium", "(223)", "alkali-metal", "Solid", [2, 8, 18, 32, 18, 8, 1], 1, 7, "Marguerite Perey (1939)", "Second-most rare element in Earth's crust."],
+            [88, "Ra", "Radium", "(226)", "alkaline-earth-metal", "Solid", [2, 8, 18, 32, 18, 8, 2], 2, 7, "Marie and Pierre Curie (1898)", "Intensely radioactive alkaline earth metal."],
+            [89, "Ac", "Actinium", "(227)", "actinide", "Solid", [2, 8, 18, 32, 18, 9, 2], 3, 10, "Friedrich Oskar Giesel (1902)", "Soft, silvery-white radioactive actinide metal."],
+            [90, "Th", "Thorium", "232.04", "actinide", "Solid", [2, 8, 18, 32, 18, 10, 2], 4, 10, "Morten Thrane Brunn (1829)", "Weakly radioactive nuclear fuel candidate element."],
+            [91, "Pa", "Protactinium", "231.04", "actinide", "Solid", [2, 8, 18, 32, 20, 9, 2], 5, 10, "Otto Hahn, Lise Meitner (1917)", "Dense, silvery-grey actinide metal."],
+            [92, "U", "Uranium", "238.03", "actinide", "Solid", [2, 8, 18, 32, 21, 9, 2], 6, 10, "Martin Heinrich Klaproth (1789)", "Primary fissile isotope material for nuclear energy."],
+            [93, "Np", "Neptunium", "(237)", "actinide", "Solid", [2, 8, 18, 32, 22, 9, 2], 7, 10, "Edwin McMillan, Philip Abelson (1940)", "First transuranic actinide element synthesized."],
+            [94, "Pu", "Plutonium", "(244)", "actinide", "Solid", [2, 8, 18, 32, 24, 8, 2], 8, 10, "Glenn T. Seaborg et al. (1940)", "Actinide metal used in nuclear reactors and weapons."],
+            [95, "Am", "Americium", "(243)", "actinide", "Solid", [2, 8, 18, 32, 25, 8, 2], 9, 10, "Glenn T. Seaborg et al. (1944)", "Used in commercial smoke detectors."],
+            [96, "Cm", "Curium", "(247)", "actinide", "Solid", [2, 8, 18, 32, 25, 9, 2], 10, 10, "Glenn T. Seaborg et al. (1944)", "Named after Marie and Pierre Curie."],
+            [97, "Bk", "Berkelium", "(247)", "actinide", "Solid", [2, 8, 18, 32, 27, 8, 2], 11, 10, "Lawrence Berkeley National Lab (1949)", "Transuranic radioactive actinide element."],
+            [98, "Cf", "Californium", "(251)", "actinide", "Solid", [2, 8, 18, 32, 28, 8, 2], 12, 10, "Lawrence Berkeley National Lab (1950)", "Strong neutron emitter used in industrial sensors."],
+            [99, "Es", "Einsteinium", "(252)", "actinide", "Solid", [2, 8, 18, 32, 29, 8, 2], 13, 10, "Lawrence Berkeley National Lab (1952)", "Discovered in debris of Ivy Mike nuclear bomb test."],
+            [100, "Fm", "Fermium", "(257)", "actinide", "Solid", [2, 8, 18, 32, 30, 8, 2], 14, 10, "Lawrence Berkeley National Lab (1952)", "Heavy actinide synthesized by neutron bombardment."],
+            [101, "Md", "Mendelevium", "(258)", "actinide", "Solid", [2, 8, 18, 32, 31, 8, 2], 15, 10, "Lawrence Berkeley National Lab (1955)", "Named in honor of Dmitri Mendeleev."],
+            [102, "No", "Nobelium", "(259)", "actinide", "Solid", [2, 8, 18, 32, 32, 8, 2], 16, 10, "Joint Institute for Nuclear Research (1966)", "Synthetic actinide named after Alfred Nobel."],
+            [103, "Lr", "Lawrencium", "(266)", "actinide", "Solid", [2, 8, 18, 32, 32, 9, 2], 17, 10, "Lawrence Berkeley National Lab (1961)", "Final element of the actinide series."],
+            [104, "Rf", "Rutherfordium", "(267)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 10, 2], 4, 7, "JINR Dubna & LBNL Berkeley (1964)", "Superheavy synthetic transition element."],
+            [105, "Db", "Dubnium", "(268)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 11, 2], 5, 7, "JINR Dubna & LBNL Berkeley (1968)", "Highly radioactive synthetic superheavy element."],
+            [106, "Sg", "Seaborgium", "(269)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 12, 2], 6, 7, "Lawrence Berkeley National Lab (1974)", "Named in honor of chemist Glenn T. Seaborg."],
+            [107, "Bh", "Bohrium", "(270)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 13, 2], 7, 7, "GSI Helmholtz Centre (1981)", "Synthetic element named after physicist Niels Bohr."],
+            [108, "Hs", "Hassium", "(277)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 14, 2], 8, 7, "GSI Helmholtz Centre (1984)", "Superheavy transactinide element."],
+            [109, "Mt", "Meitnerium", "(278)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 15, 2], 9, 7, "GSI Helmholtz Centre (1982)", "Named after physicist Lise Meitner."],
+            [110, "Ds", "Darmstadtium", "(281)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 17, 1], 10, 7, "GSI Helmholtz Centre (1994)", "Extremely radioactive synthetic transactinide."],
+            [111, "Rg", "Roentgenium", "(282)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 18, 1], 11, 7, "GSI Helmholtz Centre (1994)", "Named after Wilhelm Röntgen."],
+            [112, "Cn", "Copernicium", "(285)", "transition-metal", "Solid", [2, 8, 18, 32, 32, 18, 2], 12, 7, "GSI Helmholtz Centre (1996)", "Named after astronomer Nicolaus Copernicus."],
+            [113, "Nh", "Nihonium", "(286)", "post-transition-metal", "Solid", [2, 8, 18, 32, 32, 18, 3], 13, 7, "RIKEN Japan (2004)", "First element discovered in an Asian country."],
+            [114, "Fl", "Flerovium", "(289)", "post-transition-metal", "Solid", [2, 8, 18, 32, 32, 18, 4], 14, 7, "JINR Dubna (1998)", "Extremely radioactive synthetic element."],
+            [115, "Mc", "Moscovium", "(290)", "post-transition-metal", "Solid", [2, 8, 18, 32, 32, 18, 5], 15, 7, "JINR Dubna & LLNL Livermore (2003)", "Synthetic element named after Moscow Oblast."],
+            [116, "Lv", "Livermorium", "(293)", "post-transition-metal", "Solid", [2, 8, 18, 32, 32, 18, 6], 16, 7, "JINR Dubna & LLNL Livermore (2000)", "Named in honor of Lawrence Livermore National Lab."],
+            [117, "Ts", "Tennessine", "(294)", "metalloid", "Solid", [2, 8, 18, 32, 32, 18, 7], 17, 7, "JINR Dubna & Oak Ridge (2010)", "Second-heaviest known chemical element."],
+            [118, "Og", "Oganesson", "(294)", "noble-gas", "Gas", [2, 8, 18, 32, 32, 18, 8], 18, 7, "JINR Dubna & LLNL Livermore (2002)", "Highest atomic number and highest atomic mass of all known elements."]
+        ];
+
+        
+        const elements = rawElementsData.map(item => ({
+            number: item[0],
+            symbol: item[1],
+            name: item[2],
+            mass: item[3],
+            category: item[4],
+            phase: item[5],
+            shells: item[6],
+            gridCol: item[7],
+            gridRow: item[8],
+            discovered: item[9],
+            desc: item[10]
+        }));
+
+       
+
+        let scene, camera, renderer, controls;
+        let elementObjects = [];
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        
+        const layoutPositions = {
+            grid: [],
+            sphere: [],
+            helix: []
+        };
+
+        function initMainScene() {
+            const container = document.getElementById('canvas-container');
+
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0d1117);
+
+            
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.z = 1600;
+
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 3500;
+            controls.minDistance = 200;
+
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            dirLight.position.set(0, 500, 800);
+            scene.add(dirLight);
+
+            
+            createElementTiles();
+            calculateLayouts();
+
+            
+            applyLayout('grid', 0);
+
+            // Listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('click', onTileClick);
+
+            
+            animate();
+        }
+
+        
+
+        function createTileTexture(element) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            
+            ctx.fillStyle = '#161b22';
+            ctx.beginPath();
+            ctx.roundRect(8, 8, 240, 240, 18);
+            ctx.fill();
+
+            
+            const colorHex = '#' + (categoryColors[element.category] || 0x8b949e).toString(16).padStart(6, '0');
+            ctx.strokeStyle = colorHex;
+            ctx.lineWidth = 10;
+            ctx.stroke();
+
+            
+            ctx.fillStyle = '#8b949e';
+            ctx.font = 'bold 28px "Segoe UI", sans-serif';
+            ctx.fillText(element.number, 24, 48);
+
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 84px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(element.symbol, 128, 136);
+
+            
+            ctx.fillStyle = '#c9d1d9';
+            ctx.font = 'bold 22px "Segoe UI", sans-serif';
+            ctx.fillText(element.name, 128, 182);
+
+            
+            ctx.fillStyle = '#8b949e';
+            ctx.font = '18px "Segoe UI", sans-serif';
+            ctx.fillText(element.mass, 128, 218);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createElementTiles() {
+            const geometry = new THREE.BoxGeometry(64, 64, 8);
+
+            elements.forEach((element) => {
+                const texture = createTileTexture(element);
+                const material = new THREE.MeshStandardMaterial({
+                    map: texture,
+                    roughness: 0.2,
+                    metalness: 0.1,
+                    transparent: true,
+                    opacity: 1
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.userData = { element: element };
+                scene.add(mesh);
+                elementObjects.push(mesh);
+            });
+        }
+
+        
+
+        function calculateLayouts() {
+            const count = elementObjects.length;
+
+            
+            elements.forEach((el) => {
+                const object = new THREE.Object3D();
+                object.position.x = (el.gridCol * 76) - 720;
+                object.position.y = -(el.gridRow * 76) + 400;
+                object.position.z = 0;
+                layoutPositions.grid.push(object);
+            });
+
+            
+            for (let i = 0; i < count; i++) {
+                const phi = Math.acos(-1 + (2 * i) / count);
+                const theta = Math.sqrt(count * Math.PI) * phi;
+                const radius = 480;
+
+                const object = new THREE.Object3D();
+                object.position.setFromSphericalCoords(radius, phi, theta);
+
+                // Point outwards from sphere center
+                const lookTarget = object.position.clone().multiplyScalar(2);
+                object.lookAt(lookTarget);
+
+                layoutPositions.sphere.push(object);
+            }
+
+            
+            for (let i = 0; i < count; i++) {
+                const phi = i * 0.35 + Math.PI;
+                const radius = 500;
+
+                const object = new THREE.Object3D();
+                object.position.x = radius * Math.sin(phi);
+                object.position.y = -(i * 9) + 450;
+                object.position.z = radius * Math.cos(phi);
+
+                
+                const lookTarget = object.position.clone();
+                lookTarget.x *= 2;
+                lookTarget.z *= 2;
+                object.lookAt(lookTarget);
+
+                layoutPositions.helix.push(object);
+            }
+        }
+
+        function applyLayout(layoutType, duration = 1000) {
+            const targetPositions = layoutPositions[layoutType];
+
+            for (let i = 0; i < elementObjects.length; i++) {
+                const mesh = elementObjects[i];
+                const target = targetPositions[i];
+
+                
+                new TWEEN.Tween(mesh.position)
+                    .to({ x: target.position.x, y: target.position.y, z: target.position.z }, duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
+
+                
+                new TWEEN.Tween(mesh.rotation)
+                    .to({ x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
+            }
+        }
+
+        function switchLayout(layoutName) {
+            document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${layoutName}`).classList.add('active');
+
+            applyLayout(layoutName, 1200);
+        }
+
+        
+
+        let activeCategory = 'all';
+        let searchQuery = '';
+
+        function selectCategory(category, buttonElement) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+
+            activeCategory = category;
+            applyFilters();
+        }
+
+        function filterElements() {
+            searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            elementObjects.forEach(mesh => {
+                const el = mesh.userData.element;
+
+                const matchesCategory = (activeCategory === 'all' || el.category === activeCategory);
+                const matchesSearch = (
+                    el.name.toLowerCase().includes(searchQuery) ||
+                    el.symbol.toLowerCase().includes(searchQuery) ||
+                    el.number.toString().includes(searchQuery)
+                );
+
+                const isVisible = matchesCategory && matchesSearch;
+
+                new TWEEN.Tween(mesh.material)
+                    .to({ opacity: isVisible ? 1.0 : 0.12 }, 400)
+                    .start();
+            });
+        }
+
+       
+
+        const tooltip = document.getElementById('tooltip');
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(elementObjects);
+
+            if (intersects.length > 0) {
+                const hoveredMesh = intersects[0].object;
+                const el = hoveredMesh.userData.element;
+
+                tooltip.style.display = 'block';
+                tooltip.style.left = (event.clientX + 14) + 'px';
+                tooltip.style.top = (event.clientY + 14) + 'px';
+                tooltip.innerHTML = `<strong>${el.name} (${el.symbol})</strong><br>Atomic #${el.number} • ${el.mass} u`;
+                document.body.style.cursor = 'pointer';
+            } else {
+                tooltip.style.display = 'none';
+                document.body.style.cursor = 'default';
+            }
+        }
+
+        function onTileClick(event) {
+            if (event.clientY < 110 || event.clientY > window.innerHeight - 80) return;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(elementObjects);
+
+            if (intersects.length > 0) {
+                const selectedElement = intersects[0].object.userData.element;
+                openModal(selectedElement);
+            }
+        }
+
+       
+
+        let bohrScene, bohrCamera, bohrRenderer;
+        let bohrElectrons = [];
+        let bohrAnimationId;
+        let orbitSpeed = 1.0;
+
+        function initBohrScene() {
+            const canvas = document.getElementById('bohr-canvas');
+
+            bohrScene = new THREE.Scene();
+            bohrScene.background = new THREE.Color(0x0d1117);
+
+            bohrCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            bohrCamera.position.set(0, 32, 75);
+            bohrCamera.lookAt(0, 0, 0);
+
+            bohrRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            bohrRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            bohrRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+
+        function buildBohrAtom(element) {
+            
+            while (bohrScene.children.length > 0) {
+                bohrScene.remove(bohrScene.children[0]);
+            }
+            bohrElectrons = [];
+
+            
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
+            bohrScene.add(ambLight);
+
+            const pointLight = new THREE.PointLight(0x58a6ff, 1.2, 100);
+            pointLight.position.set(10, 20, 25);
+            bohrScene.add(pointLight);
+
+            
+            const nucleusGroup = new THREE.Group();
+            const protonCount = Math.min(element.number, 32);
+            const neutronCount = protonCount;
+
+            const sphereGeo = new THREE.SphereGeometry(0.85, 16, 16);
+            const protonMat = new THREE.MeshStandardMaterial({ color: 0xf85149, roughness: 0.2 }); // Red Protons
+            const neutronMat = new THREE.MeshStandardMaterial({ color: 0x8b949e, roughness: 0.2 }); // Grey Neutrons
+
+            for (let i = 0; i < protonCount + neutronCount; i++) {
+                const isProton = i % 2 === 0;
+                const particle = new THREE.Mesh(sphereGeo, isProton ? protonMat : neutronMat);
+
+                particle.position.set(
+                    (Math.random() - 0.5) * 4.0,
+                    (Math.random() - 0.5) * 4.0,
+                    (Math.random() - 0.5) * 4.0
+                );
+                nucleusGroup.add(particle);
+            }
+            bohrScene.add(nucleusGroup);
+
+            
+            const shellRadii = [8, 14, 20, 26, 32, 38, 44];
+
+            element.shells.forEach((electronCount, shellIndex) => {
+                const radius = shellRadii[shellIndex] || (8 + shellIndex * 6);
+
+                
+                const orbitGeo = new THREE.BufferGeometry();
+                const points = [];
+                const segments = 64;
+                for (let j = 0; j <= segments; j++) {
+                    const theta = (j / segments) * Math.PI * 2;
+                    points.push(new THREE.Vector3(Math.cos(theta) * radius, 0, Math.sin(theta) * radius));
+                }
+                orbitGeo.setFromPoints(points);
+                const orbitMat = new THREE.LineBasicMaterial({ color: 0x30363d, transparent: true, opacity: 0.8 });
+                const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+
+                orbitLine.rotation.x = (Math.PI / 6) * shellIndex;
+                orbitLine.rotation.z = (Math.PI / 8) * shellIndex;
+                bohrScene.add(orbitLine);
+
+                
+                const electronGeo = new THREE.SphereGeometry(0.55, 12, 12);
+                const electronMat = new THREE.MeshStandardMaterial({
+                    color: 0x58a6ff,
+                    emissive: 0x1f6feb,
+                    emissiveIntensity: 0.5
+                });
+
+                for (let e = 0; e < electronCount; e++) {
+                    const electronMesh = new THREE.Mesh(electronGeo, electronMat);
+                    const baseAngle = (e / electronCount) * Math.PI * 2;
+
+                    bohrScene.add(electronMesh);
+                    bohrElectrons.push({
+                        mesh: electronMesh,
+                        radius: radius,
+                        angle: baseAngle,
+                        rotX: orbitLine.rotation.x,
+                        rotZ: orbitLine.rotation.z,
+                        speed: (0.025 + (0.004 * (shellIndex + 1)))
+                    });
+                }
+            });
+        }
+
+        function animateBohrAtom() {
+            bohrAnimationId = requestAnimationFrame(animateBohrAtom);
+
+            bohrElectrons.forEach(e => {
+                e.angle += e.speed * orbitSpeed;
+
+                const x = Math.cos(e.angle) * e.radius;
+                const z = Math.sin(e.angle) * e.radius;
+
+                const pos = new THREE.Vector3(x, 0, z);
+                pos.applyAxisAngle(new THREE.Vector3(1, 0, 0), e.rotX);
+                pos.applyAxisAngle(new THREE.Vector3(0, 0, 1), e.rotZ);
+
+                e.mesh.position.copy(pos);
+            });
+
+            bohrRenderer.render(bohrScene, bohrCamera);
+        }
+
+        function updateOrbitSpeed(val) {
+            orbitSpeed = parseFloat(val);
+            document.getElementById('speed-val').innerText = orbitSpeed.toFixed(1) + 'x';
+        }
+
+        
+
+        function openModal(element) {
+            document.getElementById('modal-name').innerText = element.name;
+            document.getElementById('modal-symbol').innerText = element.symbol;
+            document.getElementById('modal-number').innerText = element.number;
+            document.getElementById('modal-mass').innerText = element.mass + ' u';
+            document.getElementById('modal-category').innerText = element.category.replace(/-/g, ' ');
+            document.getElementById('modal-phase').innerText = element.phase;
+            document.getElementById('modal-shells').innerText = element.shells.join(', ');
+            document.getElementById('modal-discovered').innerText = element.discovered;
+            document.getElementById('modal-desc').innerText = element.desc;
+
+           
+            const badge = document.getElementById('modal-category');
+            const colorHex = '#' + (categoryColors[element.category] || 0x30363d).toString(16).padStart(6, '0');
+            badge.style.backgroundColor = colorHex;
+            badge.style.color = '#ffffff';
+
+            const modal = document.getElementById('element-modal');
+            modal.classList.add('show');
+
+            if (!bohrRenderer) {
+                initBohrScene();
+            }
+
+            buildBohrAtom(element);
+
+            if (bohrAnimationId) cancelAnimationFrame(bohrAnimationId);
+            animateBohrAtom();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('element-modal');
+            modal.classList.remove('show');
+
+            if (bohrAnimationId) {
+                cancelAnimationFrame(bohrAnimationId);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            TWEEN.update();
+            controls.update();
+
+            renderer.render(scene, camera);
+        }
+
+        
+        window.onload = () => {
+            initMainScene();
+        };
+    </script>
+</body>
+</html>
